@@ -73,3 +73,19 @@ The agent automatically adapts tone and strategy dynamically based on the topic.
 
 ## Quality Gates
 The output is subjected to strict anti-repetition, keyword-salad (word spam) filtering, and explicit array bounding (min. 15 technical findings in each JSON). Generations failing this gate are auto-scheduled for full architectural re-prompting.
+
+
+### Terms Mode and Deep Think Mode
+
+**To use Terms Mode (generates tasks based on autonomous driving terms instead of PDFs):**
+Place your terms list in `Input_terms/Terms.md`.
+```bash
+python pipeline.py --terms-mode
+```
+
+**To enable the Deep Think model (e.g., Gemini 2.0 Flash Thinking / Gemini Thinking):**
+Can be combined with any mode to enable advanced reasoning capabilities.
+```bash
+python pipeline.py --deep-think
+python pipeline.py --terms-mode --deep-think
+```
