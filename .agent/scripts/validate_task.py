@@ -323,6 +323,23 @@ def validate_task(filepath, strict_thinking=False):
     # The main assistant content (Turn 2) should be a JSON dict with Review keys
     try:
         parsed_answer = json.loads(content)
+        # Auto-unwrap: Gemini sometimes wraps the answer in an array
+        if isinstance(parsed_answer, list) and len(parsed_answer) >= 1 and isinstance(parsed_answer[0], dict):
+            # Check if first element looks like a review answer (has at least 2 expected keys)
+            first_keys = set(parsed_answer[0].keys())
+            expected_keys = set(STRUCTURED_ANSWER_KEYS)
+            if len(first_keys & expected_keys) >= 2:
+                parsed_answer = parsed_answer[0]
+                # Fix the content in-place so downstream checks work
+                content = json.dumps(parsed_answer)
+                # Also fix the file on disk
+                try:
+                    convs[1]["content"] = content
+                    with open(filepath, 'w', encoding='utf-8') as fix_f:
+                        json.dump(data, fix_f, indent=2, ensure_ascii=False)
+                except Exception:
+                    pass
+
         if isinstance(parsed_answer, dict):
             for key in STRUCTURED_ANSWER_KEYS:
                 if key not in parsed_answer:
