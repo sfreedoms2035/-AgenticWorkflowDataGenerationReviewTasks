@@ -1,0 +1,55 @@
+{
+  "report_id": "QA-AUTO",
+  "evaluated_file": "Term001_Turn1_Task2.json",
+  "overall_status": "FAIL",
+  "locally_fixable": [],
+  "needs_regeneration": [
+    {
+      "category": "richness_and_complexity",
+      "issue": "rewritten_corrected_artifact too short: 2483 chars (min 5200, ~850 words)"
+    }
+  ],
+  "needs_partial_repair": [],
+  "metrics": {
+    "json_structure": {
+      "status": "PASS",
+      "violations": []
+    },
+    "conversation_completeness": {
+      "status": "PASS",
+      "violations": []
+    },
+    "richness_and_complexity": {
+      "status": "FAIL",
+      "violations": [
+        "rewritten_corrected_artifact too short: 2483 chars (min 5200, ~850 words)"
+      ]
+    },
+    "structured_answer_format": {
+      "status": "PASS",
+      "violations": []
+    },
+    "cot_structure": {
+      "status": "PASS",
+      "violations": []
+    },
+    "self_containment": {
+      "status": "PASS",
+      "violations": []
+    },
+    "followup_quality": {
+      "status": "PASS",
+      "violations": []
+    },
+    "thinking_quality": {
+      "status": "PASS",
+      "violations": []
+    }
+  },
+  "stats": {
+    "cot_chars": 12949,
+    "answer_chars": 17400,
+    "dialectic_chars": 2483,
+    "turns": 6
+  }
+}

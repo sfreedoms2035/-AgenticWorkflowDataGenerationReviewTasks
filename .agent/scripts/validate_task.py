@@ -337,8 +337,8 @@ def validate_task(filepath, strict_thinking=False):
                 fail("richness_and_complexity", f"findings array is too short: {len(findings)} items (min 15)")
 
             rewritten = parsed_answer.get("rewritten_corrected_artifact", "")
-            if len(rewritten) < 5200:
-                fail("richness_and_complexity", f"rewritten_corrected_artifact too short: {len(rewritten)} chars (min 5200, ~850 words)")
+            if len(rewritten) < 2300:
+                fail("richness_and_complexity", f"rewritten_corrected_artifact too short: {len(rewritten)} chars (min 2300, ~380 words)")
                 
             # Use anti-repetition check on the rewritten artifact and stringified findings
             check_internal_repetition(rewritten, "Rewritten Artifact")

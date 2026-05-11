@@ -1,0 +1,55 @@
+{
+  "report_id": "QA-AUTO",
+  "evaluated_file": "Term001_Turn1_Task1.json",
+  "overall_status": "FAIL",
+  "locally_fixable": [],
+  "needs_regeneration": [
+    {
+      "category": "richness_and_complexity",
+      "issue": "Rewritten Artifact contains a verbatim repetition loop. Paragraph 27 matches paragraph 8."
+    }
+  ],
+  "needs_partial_repair": [],
+  "metrics": {
+    "json_structure": {
+      "status": "PASS",
+      "violations": []
+    },
+    "conversation_completeness": {
+      "status": "PASS",
+      "violations": []
+    },
+    "richness_and_complexity": {
+      "status": "FAIL",
+      "violations": [
+        "Rewritten Artifact contains a verbatim repetition loop. Paragraph 27 matches paragraph 8."
+      ]
+    },
+    "structured_answer_format": {
+      "status": "PASS",
+      "violations": []
+    },
+    "cot_structure": {
+      "status": "PASS",
+      "violations": []
+    },
+    "self_containment": {
+      "status": "PASS",
+      "violations": []
+    },
+    "followup_quality": {
+      "status": "PASS",
+      "violations": []
+    },
+    "thinking_quality": {
+      "status": "PASS",
+      "violations": []
+    }
+  },
+  "stats": {
+    "cot_chars": 12193,
+    "answer_chars": 28246,
+    "dialectic_chars": 12735,
+    "turns": 6
+  }
+}
