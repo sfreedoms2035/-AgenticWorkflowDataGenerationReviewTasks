@@ -90,3 +90,12 @@ Can be combined with any mode to enable advanced reasoning capabilities.
 python pipeline.py --deep-think
 python pipeline.py --terms --deep-think
 ```
+
+
+## 🌐 Cross-Platform Support (Windows, macOS, Linux)
+
+This pipeline has been fully engineered for cross-platform compatibility and natively supports **Windows**, **macOS**, and **Linux** environments:
+
+1. **OS Auto-Detection Engine**: Subprocesses and internal commands are run dynamically using the executing Python binary (`sys.executable`). This ensures seamless execution inside virtual environments (`venv`, `conda`) without any hardcoded environment binding issues.
+2. **LlamaIndex Parsing Portability**: The parsing mechanism automatically detects the host operating system to execute `@llamaindex/liteparse` seamlessly (utilizing `npx.cmd` on Windows and `npx` on macOS/Linux).
+3. **Encoding Resiliency**: File reads, writes, and console logging are configured to force `UTF-8` encoding globally, preventing any host-specific string manipulation failures across UNIX and Windows terminals.

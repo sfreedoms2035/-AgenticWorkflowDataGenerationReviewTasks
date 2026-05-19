@@ -537,7 +537,8 @@ def build_repair_prompt(validation_report, original_prompt_text):
 # ── Execution Engine ─────────────────────────────────────────────────────────
 def run_playwright(pdf_path, prompt_file, deep_think=False, terms_mode=False):
     """Execute the Playwright script and return success boolean."""
-    cmd = f'python "{PLAYWRIGHT_SCRIPT}" "{pdf_path}" "{prompt_file}"'
+    # Use sys.executable for cross-platform OS auto-detection (Windows, Linux, macOS)
+    cmd = f'"{sys.executable}" "{PLAYWRIGHT_SCRIPT}" "{pdf_path}" "{prompt_file}"'
     if deep_think:
         cmd += ' --deep-think'
     if terms_mode:
@@ -557,7 +558,8 @@ def run_playwright(pdf_path, prompt_file, deep_think=False, terms_mode=False):
 
 def run_validation(json_path, report_path=None, strict_thinking=False):
     """Run validate_task.py and return the parsed report."""
-    cmd = f'python "{VALIDATE_SCRIPT}" "{json_path}"'
+    # Use sys.executable for cross-platform OS auto-detection (Windows, Linux, macOS)
+    cmd = f'"{sys.executable}" "{VALIDATE_SCRIPT}" "{json_path}"'
     if report_path:
         cmd += f' --save-report "{report_path}"'
     if strict_thinking:
@@ -573,7 +575,8 @@ def run_validation(json_path, report_path=None, strict_thinking=False):
 
 def run_auto_repair(json_path):
     """Run auto_repair.py on a failed task. Parse JSON from stdout only."""
-    cmd = f'python "{AUTO_REPAIR_SCRIPT}" "{json_path}"'
+    # Use sys.executable for cross-platform OS auto-detection (Windows, Linux, macOS)
+    cmd = f'"{sys.executable}" "{AUTO_REPAIR_SCRIPT}" "{json_path}"'
     result = subprocess.run(cmd, shell=True, cwd=BASE_DIR, capture_output=True, text=True, encoding="utf-8", errors="replace")
     try:
         return json.loads(result.stdout)
@@ -590,7 +593,8 @@ def run_partial_repair(json_path, pdf_path):
       3. Patch the follow-up turns back into the JSON
     """
     # Step 1: Build repair prompt
-    cmd = f'python "{PARTIAL_REPAIR_SCRIPT}" --build-prompt "{json_path}"'
+    # Use sys.executable for cross-platform OS auto-detection (Windows, Linux, macOS)
+    cmd = f'"{sys.executable}" "{PARTIAL_REPAIR_SCRIPT}" --build-prompt "{json_path}"'
     result = subprocess.run(cmd, shell=True, cwd=BASE_DIR, capture_output=True, text=True, encoding="utf-8", errors="replace")
     
     repair_prompt = result.stdout.strip()
@@ -622,7 +626,8 @@ def run_partial_repair(json_path, pdf_path):
     
     # Check if Playwright produced a response we can use
     if os.path.exists(raw_response_path):
-        cmd_patch = f'python "{PARTIAL_REPAIR_SCRIPT}" --patch "{json_path}" "{raw_response_path}"'
+        # Use sys.executable for cross-platform OS auto-detection (Windows, Linux, macOS)
+        cmd_patch = f'"{sys.executable}" "{PARTIAL_REPAIR_SCRIPT}" --patch "{json_path}" "{raw_response_path}"'
         patch_result = subprocess.run(cmd_patch, shell=True, cwd=BASE_DIR, capture_output=True, text=True, encoding="utf-8", errors="replace")
         try:
             patch_report = json.loads(patch_result.stdout)
@@ -994,7 +999,8 @@ def process_pdf(pdf_path, progress, start_turn=1, start_task=1, end_turn=8, skip
     if not skip_dashboard and tasks_since_dashboard > 0:
         try:
             print(f"\n  📊 Generating final dashboard...")
-            subprocess.run(f'python "{DASHBOARD_SCRIPT}"', shell=True,
+            # Use sys.executable for cross-platform OS auto-detection (Windows, Linux, macOS)
+            subprocess.run(f'"{sys.executable}" "{DASHBOARD_SCRIPT}"', shell=True,
                           cwd=BASE_DIR, capture_output=True)
             # Auto-open the dashboard in the browser
             if os.path.exists(DASHBOARD_OUTPUT):
