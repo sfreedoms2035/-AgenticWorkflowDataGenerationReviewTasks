@@ -640,29 +640,28 @@ CRITICAL AVOIDANCE: DO NOT use "Canvas" mode, "Gems", or any interactive coding 
         log("Hiding left sidebar to prevent chat history overlay issues...")
         try:
             page.evaluate("""() => {
-                // Find the hamburger menu button (usually has mat-icon 'menu')
+                // Find the sidebar toggle button (sparkle button or hamburger menu)
                 const buttons = Array.from(document.querySelectorAll('button'));
-                let hamburger = null;
+                let sidebarBtn = null;
                 for (const b of buttons) {
                     const aria = (b.getAttribute('aria-label') || '').toLowerCase();
-                    if (aria.includes('menü') || aria.includes('menu') || aria.includes('collapse')) {
-                        hamburger = b;
+                    if (aria.includes('seitenleiste') || aria.includes('sidebar') || aria.includes('menü') || aria.includes('menu') || aria.includes('collapse')) {
+                        sidebarBtn = b;
                         break;
                     }
                     const icon = b.querySelector('mat-icon');
                     if (icon && icon.textContent.trim() === 'menu') {
-                        hamburger = b;
+                        sidebarBtn = b;
                         break;
                     }
                 }
                 
-                // If sidebar has visible "Neuer Chat" text or similar, it's expanded.
-                const isExpanded = Array.from(document.querySelectorAll('*')).some(e => 
-                    (e.textContent === 'Neuer Chat' || e.textContent === 'New chat') && e.offsetParent !== null
-                );
+                // Check if sidebar is expanded by looking for conversation list or nav elements
+                const sideNav = document.querySelector('side-navigation-v2, bard-sidenav');
+                const isExpanded = sideNav ? sideNav.offsetWidth > 100 : false;
                 
-                if (hamburger && isExpanded) {
-                    hamburger.click();
+                if (sidebarBtn && isExpanded) {
+                    sidebarBtn.click();
                 }
             }""")
             page.wait_for_timeout(500)
@@ -749,22 +748,24 @@ CRITICAL AVOIDANCE: DO NOT use "Canvas" mode, "Gems", or any interactive coding 
                     
                     # Step 3: Find all model options and identify Pro
                     model_info = page.evaluate("""() => {
-                        const options = document.querySelectorAll('button.bard-mode-list-button');
+                        // New UI (May 2026): gem-menu-item[role="menuitem"] inside gem-menu
+                        let options = document.querySelectorAll('gem-menu-item[role="menuitem"]');
                         if (options.length === 0) {
-                            // Fallback: try mat-mdc-menu-item
-                            const menuItems = document.querySelectorAll('.mat-mdc-menu-item');
-                            if (menuItems.length === 0) return { found: false, options: [] };
+                            // Fallback: try old selectors
+                            options = document.querySelectorAll('button.bard-mode-list-button');
                         }
-                        
-                        const allButtons = options.length > 0 ? options : 
-                            document.querySelectorAll('.mat-mdc-menu-item');
+                        if (options.length === 0) {
+                            options = document.querySelectorAll('.mat-mdc-menu-item');
+                        }
+                        if (options.length === 0) return { found: false, options: [] };
                         
                         const result = { found: true, options: [], proIndex: -1 };
                         
-                        allButtons.forEach((btn, idx) => {
+                        options.forEach((btn, idx) => {
                             const text = btn.innerText.trim();
-                            const isSelected = btn.classList.contains('is-selected');
-                            const hasCheck = btn.querySelector('.mode-check') !== null;
+                            // New UI uses .selected class; old UI uses .is-selected
+                            const isSelected = btn.classList.contains('selected') || btn.classList.contains('is-selected');
+                            const hasCheck = btn.querySelector('.mode-check') !== null || isSelected;
                             
                             result.options.push({
                                 index: idx,
@@ -773,23 +774,22 @@ CRITICAL AVOIDANCE: DO NOT use "Canvas" mode, "Gems", or any interactive coding 
                                 hasCheck: hasCheck
                             });
                             
-                            // Identify Pro: button text starts with "Pro" or contains "Pro"
-                            // at the title level (not just in description)
-                            const titleSpans = btn.querySelectorAll('span');
-                            for (const span of titleSpans) {
-                                const spanText = span.innerText.trim();
-                                // Match exactly "Pro" as standalone title, not "Programmier..." or "Probleme"
-                                if (spanText === 'Pro' || spanText === '3.1 Pro') {
-                                    result.proIndex = idx;
-                                    break;
-                                }
+                            // Identify Pro: text contains "Pro" as a model name
+                            const textLines = text.split('\n');
+                            const firstLine = (textLines[0] || '').trim();
+                            if (firstLine.includes('Pro') && !firstLine.includes('Flash')) {
+                                result.proIndex = idx;
                             }
                             
-                            // Fallback: if the button text line starts with Pro
+                            // Also check spans for exact match
                             if (result.proIndex === -1) {
-                                const lines = text.split('\\n');
-                                if (lines[0].trim() === 'Pro') {
-                                    result.proIndex = idx;
+                                const titleSpans = btn.querySelectorAll('span');
+                                for (const span of titleSpans) {
+                                    const spanText = span.innerText.trim();
+                                    if (spanText === 'Pro' || spanText === '3.1 Pro' || spanText === '3.1\u00a0Pro') {
+                                        result.proIndex = idx;
+                                        break;
+                                    }
                                 }
                             }
                         });
@@ -828,9 +828,10 @@ CRITICAL AVOIDANCE: DO NOT use "Canvas" mode, "Gems", or any interactive coding 
                     # Step 4: Click Pro option
                     log(f"  🔄 Pro is NOT selected — clicking to select it...")
                     clicked = page.evaluate(f"""(proIdx) => {{
-                        const options = document.querySelectorAll('button.bard-mode-list-button');
-                        const allButtons = options.length > 0 ? options :
-                            document.querySelectorAll('.mat-mdc-menu-item');
+                        // New UI: gem-menu-item; Old UI: bard-mode-list-button
+                        let allButtons = document.querySelectorAll('gem-menu-item[role="menuitem"]');
+                        if (allButtons.length === 0) allButtons = document.querySelectorAll('button.bard-mode-list-button');
+                        if (allButtons.length === 0) allButtons = document.querySelectorAll('.mat-mdc-menu-item');
                         if (proIdx >= 0 && proIdx < allButtons.length) {{
                             allButtons[proIdx].click();
                             return true;
@@ -914,9 +915,10 @@ CRITICAL AVOIDANCE: DO NOT use "Canvas" mode, "Gems", or any interactive coding 
                         
                         # Native locators based on screenshot "+ | Tools"
                         tools_selectors = [
+                            'button[aria-label*="Tools"]',
+                            'button[aria-label*="Uploads"]',
                             'button:has-text("Tools")',
                             'button:has-text("Werkzeuge")',
-                            'button[aria-label*="Tools"]',
                             'button[aria-label*="Werkzeuge"]',
                             'button.tool-button',
                             'button[data-test-id="tools-button"]'
@@ -1053,9 +1055,9 @@ CRITICAL AVOIDANCE: DO NOT use "Canvas" mode, "Gems", or any interactive coding 
             # 1. Primary injection: Use Playwright's evaluate to safely pass the string and trigger React
             log("  Injecting Mega-Prompt via JS...")
             page.evaluate("""(text) => {
-                const box = document.querySelector('rich-textarea p') || document.querySelector('rich-textarea div[contenteditable="true"]');
+                const box = document.querySelector('rich-textarea .ql-editor') || document.querySelector('rich-textarea p') || document.querySelector('rich-textarea div[contenteditable="true"]');
                 if (box) {
-                    box.innerHTML = '';  // Clear existing content
+                    box.textContent = '';  // Clear existing content (innerHTML blocked by TrustedHTML policy)
                     box.innerText = text;
                     box.dispatchEvent(new Event('input', {bubbles: true}));
                 }
@@ -1103,7 +1105,7 @@ CRITICAL AVOIDANCE: DO NOT use "Canvas" mode, "Gems", or any interactive coding 
             if not generation_started:
                 # Double-check: is the textarea still full? If so, try sending again
                 textarea_content = page.evaluate("""() => {
-                    const box = document.querySelector('rich-textarea p') || document.querySelector('rich-textarea div[contenteditable="true"]');
+                    const box = document.querySelector('rich-textarea .ql-editor') || document.querySelector('rich-textarea p') || document.querySelector('rich-textarea div[contenteditable="true"]');
                     return box ? box.innerText.trim().length : 0;
                 }""")
                 if textarea_content > 100:
@@ -1147,6 +1149,8 @@ CRITICAL AVOIDANCE: DO NOT use "Canvas" mode, "Gems", or any interactive coding 
             finished_selectors = [
                 'button[aria-label*="Good response"]',
                 'button[aria-label*="Gute Antwort"]',
+                'button[aria-label="Kopieren"]',
+                'button[aria-label="Copy"]',
                 'button[aria-label*="Copy answer"]',
                 'button[aria-label*="Antwort kopieren"]'
             ]
@@ -1492,13 +1496,16 @@ CRITICAL AVOIDANCE: DO NOT use "Canvas" mode, "Gems", or any interactive coding 
             
             # 2. Try the general "Copy answer" button
             copy_selectors = [
+                 'button[aria-label="Kopieren"]',
+                 'button[aria-label="Copy"]',
                  'button[aria-label*="Copy answer"]',
                  'button[aria-label*="Antwort kopieren"]',
                  'button[mattooltip*="Copy answer"]',
                  'button[mattooltip*="Antwort kopieren"]',
                  'button[mattooltip*="content_copy"]',
                  'button[aria-label*="Copy text"]',
-                 'button:has(mat-icon:has-text("content_copy"))'
+                 'button:has(mat-icon:has-text("content_copy"))',
+                 'copy-button button'
             ]
             copy_clicked = False
             for copy_sel in copy_selectors:
