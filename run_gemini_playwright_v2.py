@@ -458,8 +458,8 @@ def run_gemini(pdf_path, prompt_file, deep_think=False, output_dir=None, thinkin
     else:
         log(f"Extracting PDF via LiteParse: {os.path.basename(abs_pdf_path)}")
         # Auto-detect OS to use npx.cmd on Windows and npx on Linux/macOS
-            npx_cmd = 'npx.cmd' if sys.platform.startswith('win') else 'npx'
-            cmd = f'{npx_cmd} --yes @llamaindex/liteparse parse "{abs_pdf_path}" --format json -q'
+        npx_cmd = 'npx.cmd' if sys.platform.startswith('win') else 'npx'
+        cmd = f'{npx_cmd} --yes @llamaindex/liteparse parse "{abs_pdf_path}" --format json -q'
         try:
             proc = subprocess.run(cmd, shell=True, capture_output=True, text=True, encoding='utf-8')
             if proc.returncode != 0:
