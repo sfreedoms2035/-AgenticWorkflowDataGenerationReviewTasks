@@ -1213,20 +1213,41 @@ CRITICAL AVOIDANCE: DO NOT use "Canvas" mode, "Gems", or any interactive coding 
                             break
                     
                     if not is_generating:
-                        for sel in finished_selectors:
-                            loc = page.locator(sel)
-                            if loc.count() > 0 and loc.last.is_visible():
-                                # Double-check it didn't just flicker
-                                page.wait_for_timeout(2000)
-                                is_gen_now = False
-                                for ssel in stop_selectors:
-                                    sbtn = page.locator(ssel)
-                                    if sbtn.count() > 0 and sbtn.first.is_visible():
-                                        is_gen_now = True
-                                        break
-                                if not is_gen_now:
-                                    log("  ✅ Generation complete (UI signal detected)")
-                                    return 'DONE'
+                        # Scope finished check to the current response container (last model-response or message-content parent)
+                        current_resp = page.locator('model-response').last
+                        if current_resp.count() == 0:
+                            current_resp = page.locator('message-content').last
+                        
+                        if current_resp.count() > 0:
+                            for sel in finished_selectors:
+                                loc = current_resp.locator(sel)
+                                if loc.count() > 0 and loc.last.is_visible():
+                                    # Double-check it didn't just flicker
+                                    page.wait_for_timeout(2000)
+                                    is_gen_now = False
+                                    for ssel in stop_selectors:
+                                        sbtn = page.locator(ssel)
+                                        if sbtn.count() > 0 and sbtn.first.is_visible():
+                                            is_gen_now = True
+                                            break
+                                    if not is_gen_now:
+                                        log("  ✅ Generation complete (UI signal detected inside current response)")
+                                        return 'DONE'
+                        else:
+                            # Fallback if no container is found
+                            for sel in finished_selectors:
+                                loc = page.locator(sel)
+                                if loc.count() > 0 and loc.last.is_visible():
+                                    page.wait_for_timeout(2000)
+                                    is_gen_now = False
+                                    for ssel in stop_selectors:
+                                        sbtn = page.locator(ssel)
+                                        if sbtn.count() > 0 and sbtn.first.is_visible():
+                                            is_gen_now = True
+                                            break
+                                    if not is_gen_now:
+                                        log("  ✅ Generation complete (UI signal detected via fallback)")
+                                        return 'DONE'
                 except Exception:
                     pass
 
@@ -1512,7 +1533,11 @@ CRITICAL AVOIDANCE: DO NOT use "Canvas" mode, "Gems", or any interactive coding 
             # 1. Clear clipboard
             page.evaluate("navigator.clipboard.writeText('')")
             
-            # 2. Try the general "Copy answer" button
+            # 2. Try the general "Copy answer" button scoped to the last response
+            current_resp = page.locator('model-response').last
+            if current_resp.count() == 0:
+                current_resp = page.locator('message-content').last
+            
             copy_selectors = [
                  'button[aria-label="Kopieren"]',
                  'button[aria-label="Copy"]',
@@ -1527,7 +1552,7 @@ CRITICAL AVOIDANCE: DO NOT use "Canvas" mode, "Gems", or any interactive coding 
             ]
             copy_clicked = False
             for copy_sel in copy_selectors:
-                copy_btn = page.locator(copy_sel)
+                copy_btn = current_resp.locator(copy_sel) if current_resp.count() > 0 else page.locator(copy_sel)
                 if copy_btn.count() > 0:
                     # Some buttons are hidden until hovered
                     try:
